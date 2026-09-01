@@ -88,12 +88,6 @@ enable_certificate_period: "no"
 certificate_validity_period: ""
 ca_certificate_validity_period: ""
 
-####################
-# kubernetes(1.24.0+) 使用 runtime 为 docker
-####################
-# cir-dockerd 的二进制文件镜像
-#cri_dockerd_image: "ccr.ccs.tencentyun.com/pixiucloud/cri-dockerd:v0.3.10"
-
 #####################
 # keepalived options
 #####################

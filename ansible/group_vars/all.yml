@@ -110,9 +110,6 @@ containerd_data_dir: "{{ runtime_data_dir }}"
 docker_package_bclinux: "docker-ce{{'' if docker_release == '' else '-' ~ docker_release }}"
 containerd_package_bclinux: "containerd.io{{'' if containerd_release == '' else '-' ~ containerd_release }}"
 
-# cir-dockerd 的二进制文件镜像
-cri_dockerd_image: "ccr.ccs.tencentyun.com/pixiucloud/cri-dockerd:v0.3.10"
-
 node_config_directory: "/etc/kubez/"
 
 ######################
