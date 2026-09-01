@@ -24,9 +24,9 @@ author: Caoyingjun
 '''
 
 EXAMPLES = '''
-- name: install baniry cri-dockerd
+- name: get cri socket path
   cri_socket:
-    runtime_type: "docker"
+    runtime_type: "containerd"
     kubernetes_version: 1.24.0
   delegate_to: "{{ groups['kube-master'][0] }}"
 '''
@@ -45,10 +45,7 @@ class SocketWorker(object):
         if self.runtime_type == 'containerd':
             self.result['cri_socket'] = '/run/containerd/containerd.sock'
         elif self.runtime_type == 'docker':
-            if self.kubernetes_version >= '1.24.0':
-                self.result['cri_socket'] = '/var/run/cri-dockerd.sock'
-            else:
-                self.result['cri_socket'] = ''
+            self.result['cri_socket'] = ''
 
 
 def main():
