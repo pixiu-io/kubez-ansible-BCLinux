@@ -1,6 +1,6 @@
 ---
 - name: Install dependent packages for kubernetes nodes
-  package:
+  dnf:
     name: "{{ item }}"
     state: present
   loop:
@@ -9,7 +9,7 @@
     - inventory_hostname in groups['kubernetes']
 
 - name: Install haproxy and keepalived
-  package:
+  dnf:
     name:
       - haproxy
       - keepalived
@@ -21,10 +21,9 @@
 - name: Install kubernetes packages
   block:
     - name: Install kubernetes and its indepent packages
-      package:
+      dnf:
         name: "{{ item }}"
         state: present
-        use: yum
       loop:
         - "kubelet-{{ kube_release }}"
         - "kubectl-{{ kube_release }}"
@@ -43,17 +42,16 @@
     - inventory_hostname in groups['kubernetes']
 
 - name: Install runtimes for kubernetes
-  package:
+  dnf:
     name: "{{ item.runtime }}"
     state: present
-    use: "{{ item.use }}"
   when:
     - inventory_hostname in groups[item.nodegroups] or
       inventory_hostname in groups[item.mastergroups]
     - ansible_distribution in bclinux_distributions
   loop:
-    - {runtime: "{{ docker_package_bclinux }}", nodegroups: "docker-node", mastergroups: "docker-master", use: "yum"}
-    - {runtime: "{{ containerd_package_bclinux }}", nodegroups: "containerd-node", mastergroups: "containerd-master", use: "yum"}
+    - {runtime: "{{ docker_package_bclinux }}", nodegroups: "docker-node", mastergroups: "docker-master"}
+    - {runtime: "{{ containerd_package_bclinux }}", nodegroups: "containerd-node", mastergroups: "containerd-master"}
 
 - name: Ensure /etc/docker directories exists
   file:
