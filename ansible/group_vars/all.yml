@@ -2,6 +2,11 @@
 ########################
 # Kubez-ansible Options
 ########################
+# Ansible 在不同 BCLinux 版本上可能报告为 BigCloud 或 BigCloud Enterprise Linux
+bclinux_distributions:
+  - "BigCloud"
+  - "BigCloud Enterprise Linux"
+
 network_interface: "eth0"
 api_interface: "{{ network_interface }}"
 api_interface_address: "{{ hostvars[inventory_hostname]['ansible_' + api_interface]['ipv4']['address'] }}"
