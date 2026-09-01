@@ -30,7 +30,7 @@
         - "kubectl-{{ kube_release }}"
         - "kubeadm-{{ kube_release }}"
       when:
-        - ansible_distribution == 'BigCloud Enterprise Linux'
+        - ansible_distribution in bclinux_distributions
 
     # Somethings service module invoke enable command failed,
     # but I do not know the reason, use shell module to avoid.
@@ -50,7 +50,7 @@
   when:
     - inventory_hostname in groups[item.nodegroups] or
       inventory_hostname in groups[item.mastergroups]
-    - ansible_distribution == 'BigCloud Enterprise Linux'
+    - ansible_distribution in bclinux_distributions
   loop:
     - {runtime: "{{ docker_package_bclinux }}", nodegroups: "docker-node", mastergroups: "docker-master", use: "yum"}
     - {runtime: "{{ containerd_package_bclinux }}", nodegroups: "containerd-node", mastergroups: "containerd-master", use: "yum"}

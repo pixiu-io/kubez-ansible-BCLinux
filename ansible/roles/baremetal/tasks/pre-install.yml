@@ -8,7 +8,7 @@
       kubez-ansible-BCLinux 仅支持 BigCloud Enterprise Linux (ID=bclinux)，
       当前节点 {{ inventory_hostname }} 的 ansible_distribution={{ ansible_distribution }}。
   when:
-    - ansible_distribution != 'BigCloud Enterprise Linux'
+    - ansible_distribution not in bclinux_distributions
 
 - name: Check the network nics for all nodes
   debug:
@@ -60,7 +60,7 @@
   when:
     - change_selinux | bool
     - inventory_hostname in groups['baremetal']
-    - ansible_distribution == 'BigCloud Enterprise Linux'
+    - ansible_distribution in bclinux_distributions
 
 # Try to stop and disable delegated service,
 # let it go when not exists.
@@ -72,7 +72,7 @@
   failed_when: false
   when:
     - inventory_hostname in groups['baremetal']
-    - ansible_distribution == 'BigCloud Enterprise Linux'
+    - ansible_distribution in bclinux_distributions
 
 - name: Copy NetworkManager confs
   template:
@@ -80,7 +80,7 @@
     dest: /etc/NetworkManager/conf.d/pixiu-canal.conf
   when:
     - inventory_hostname in groups['baremetal']
-    - ansible_distribution == 'BigCloud Enterprise Linux'
+    - ansible_distribution in bclinux_distributions
   notify:
     - Restart NetworkManager service
 
@@ -97,7 +97,7 @@
         - {"src": docker-ce.repo-openEuler.j2, "dest": /etc/yum.repos.d/docker-ce.repo}
         - {"src": kubernetes.repo.j2, "dest": /etc/yum.repos.d/kubernetes.repo}
       when:
-        - ansible_distribution == 'BigCloud Enterprise Linux'
+        - ansible_distribution in bclinux_distributions
   when:
     - not (enable_custom_repo | bool)
 
@@ -140,4 +140,4 @@
         mode: "0644"
   when:
     - enable_custom_repo | bool
-    - ansible_distribution == 'BigCloud Enterprise Linux'
+    - ansible_distribution in bclinux_distributions
