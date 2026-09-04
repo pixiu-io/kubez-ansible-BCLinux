@@ -60,7 +60,7 @@ cluster_cidr: "172.30.0.0/16"
 service_cidr: "10.254.0.0/16"
 
 # kube-proxy mode: iptables 或 ipvs，默认 iptables
-# BCLinux 若缺 xt_MASQUERADE，部署后请按 README 将 kube-proxy / Calico Felix 切到 nftables
+# BCLinux 若缺 xt_MASQUERADE，部署后请按 docs/faq.md 将 kube-proxy / Calico Felix 切到 nftables
 kube_proxy_mode: "iptables"
 
 # Kubernetes network cni options

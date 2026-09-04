@@ -26,7 +26,7 @@ service_cidr: "10.254.0.0/16"
 #kube_proxy_mode: "iptables"
 # BCLinux 部分内核缺少 xt_MASQUERADE，仅有 nft_masq 时，iptables 模式会导致
 # kube-proxy / Calico 起不来。部署后需手动将 kube-proxy mode 与 Felix nftablesMode
-# 改为 nftables，详见 README「BCLinux 注意：kube-proxy / Calico 需使用 nftables」。
+# 改为 nftables，详见 docs/faq.md。
 
 #Network interface is optional, the default value
 #is eth0.
