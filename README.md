@@ -7,10 +7,20 @@
 
 ## 项目介绍
 
+面向 **BigCloud Enterprise Linux（bclinux）** 定制。
+
+**架构支持：**
+
+| 部署方式 | 支持架构 |
+|----------|----------|
+| 在线     | arm64（aarch64）、amd64（x86_64） |
+| 离线     | 仅 arm64（aarch64） |
+
 ```text
 NAME="BigCloud Enterprise Linux"   # 部分版本也可能为 BigCloud
 ID="bclinux"
 VERSION_ID="21.10"
+# 在线：arm64 / amd64；离线：仅 arm64（镜像标签 arm64-bclinux / amd64-bclinux）
 ```
 
 其它发行版请使用上游项目：[pixiu-io/kubez-ansible](https://github.com/pixiu-io/kubez-ansible)。
