@@ -3,7 +3,6 @@
 
 - name: Set haproxy runtime facts
   set_fact:
-    haproxy_runtime_type: "{{ 'docker' if inventory_hostname in (groups['docker-master'] | default([])) else 'containerd' }}"
     haproxy_kubelet_cgroup_driver: "{{ 'systemd' if inventory_hostname in (groups['docker-master'] | default([])) else 'cgroupfs' }}"
     haproxy_cri_socket: "{{ '' if inventory_hostname in (groups['docker-master'] | default([])) else 'unix:///run/containerd/containerd.sock' }}"
   when: inventory_hostname in groups['haproxy']
@@ -85,21 +84,6 @@
   when: inventory_hostname in groups['haproxy']
   notify:
     - Restart haproxy static pod
-
-- name: Pull haproxy and keepalived images
-  shell: |
-    set -e
-    if [ "{{ haproxy_runtime_type }}" = "docker" ]; then
-      docker pull {{ haproxy_image }}
-      docker pull {{ keepalived_image }}
-    else
-      crictl pull {{ haproxy_image }}
-      crictl pull {{ keepalived_image }}
-    fi
-  args:
-    executable: /bin/bash
-  changed_when: false
-  when: inventory_hostname in groups['haproxy']
 
 - name: Check whether kubelet is already configured by kubeadm
   stat:
