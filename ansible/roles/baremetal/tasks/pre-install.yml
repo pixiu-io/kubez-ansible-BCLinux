@@ -112,6 +112,17 @@
         _custom_repo_dir: "/etc/yum.repos.d"
         _custom_repo_name: "pixiu.repo"
 
+    # BCLinux rpm 安全策略(_pkgverify_level=all)会强制 gpgcheck 并覆盖 repo 配置，
+    # 内网 pixiu 源 rpm 无对应系统公钥时安装必失败，且 --nogpgcheck/dnf.conf 均无法绕过。
+    # 经线上验证：仅在宏路径最高优先级的 /root/.rpmmacros 写入 none 才能真正关闭(root 下必生效)。
+    - name: Disable rpm pkgverify level for custom repo
+      lineinfile:
+        path: /root/.rpmmacros
+        regexp: '^%_pkgverify_level'
+        line: '%_pkgverify_level none'
+        create: true
+        mode: "0600"
+
     # creates 保证备份已存在时跳过，幂等
     - name: Backup original repo directory
       command: cp -a "{{ _custom_repo_src }}" "{{ _custom_repo_backup }}"
