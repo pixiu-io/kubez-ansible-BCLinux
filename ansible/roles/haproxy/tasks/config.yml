@@ -1,24 +1,6 @@
 ---
 - include_tasks: precheck.yml
 
-- name: Set haproxy runtime facts
-  set_fact:
-    haproxy_kubelet_cgroup_driver: "{{ 'systemd' if inventory_hostname in (groups['docker-master'] | default([])) else 'cgroupfs' }}"
-    haproxy_cri_socket: "{{ '' if inventory_hostname in (groups['docker-master'] | default([])) else 'unix:///run/containerd/containerd.sock' }}"
-  when: inventory_hostname in groups['haproxy']
-
-- name: Stop and mask systemd haproxy/keepalived if present
-  systemd:
-    name: "{{ item }}"
-    state: stopped
-    enabled: false
-    masked: true
-  loop:
-    - haproxy
-    - keepalived
-  failed_when: false
-  when: inventory_hostname in groups['haproxy']
-
 - name: Ensuring haproxy and keepalived directories exist
   file:
     path: "/etc/{{ item }}"
@@ -33,14 +15,6 @@
 - name: Ensuring kubernetes static pod manifests directory exists
   file:
     path: "{{ haproxy_manifest_dir }}"
-    state: directory
-    mode: "0755"
-  become: true
-  when: inventory_hostname in groups['haproxy']
-
-- name: Ensuring kubelet state directory exists
-  file:
-    path: /var/lib/kubelet
     state: directory
     mode: "0755"
   become: true
@@ -62,8 +36,6 @@
     mode: "0644"
   become: true
   when: inventory_hostname in groups['haproxy']
-  notify:
-    - Restart keepalived static pod
 
 - name: Copy keepalived health check script
   template:
@@ -72,8 +44,6 @@
     mode: "0755"
   become: true
   when: inventory_hostname in groups['haproxy']
-  notify:
-    - Restart keepalived static pod
 
 - name: Copy haproxy confs
   template:
@@ -82,46 +52,6 @@
     mode: "0644"
   become: true
   when: inventory_hostname in groups['haproxy']
-  notify:
-    - Restart haproxy static pod
-
-- name: Check whether kubelet is already configured by kubeadm
-  stat:
-    path: /etc/kubernetes/kubelet.conf
-  register: haproxy_kubelet_conf
-  when: inventory_hostname in groups['haproxy']
-
-# Before kubeadm init, start kubelet with a minimal config so static pods can run.
-- name: Bootstrap kubelet for HA static pods
-  block:
-    - name: Write bootstrap kubelet configuration
-      template:
-        src: kubelet-bootstrap-config.yaml.j2
-        dest: "{{ haproxy_kubelet_config_path }}"
-        mode: "0644"
-
-    - name: Write kubeadm flags for container runtime
-      template:
-        src: kubeadm-flags.env.j2
-        dest: /var/lib/kubelet/kubeadm-flags.env
-        mode: "0644"
-    - name: Ensure kubelet is started
-      systemd:
-        name: kubelet
-        state: started
-        enabled: true
-  when:
-    - inventory_hostname in groups['haproxy']
-    - not haproxy_kubelet_conf.stat.exists
-
-- name: Ensure kubelet is running for static pods
-  systemd:
-    name: kubelet
-    state: started
-    enabled: true
-  when:
-    - inventory_hostname in groups['haproxy']
-    - haproxy_kubelet_conf.stat.exists
 
 - name: Deploy haproxy static pod manifest
   template:
@@ -138,15 +68,3 @@
     mode: "0600"
   become: true
   when: inventory_hostname in groups['haproxy']
-
-- name: Flush handlers
-  meta: flush_handlers
-
-- name: Wait for kubernetes VIP via haproxy static pods
-  wait_for:
-    host: "{{ kube_vip_address }}"
-    port: "{{ kube_vip_port }}"
-    timeout: 180
-  when:
-    - inventory_hostname in groups['haproxy']
-  run_once: true
