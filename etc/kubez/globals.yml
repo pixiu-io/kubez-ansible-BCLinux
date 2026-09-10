@@ -36,13 +36,18 @@ network_interface: "eth0"
 # the hosts running keepalived for high-availability.
 #kube_vip_address: ""
 
-# Enable haproxy and keepalived
+# Enable haproxy and keepalived (static pods under /etc/kubernetes/manifests)
 # This configuration is usually enabled when self-created VMs require high availability.
 #enable_haproxy: "no"
 
 # Listen port for kubernetes.
 # 启用 haproxy + keepalived 时, 监听端口推荐使用 8443
 #kube_vip_port: 6443
+
+# HA 静态 Pod 镜像（可选，默认见 ansible/group_vars/all.yml）
+#haproxy_image: "haproxy:2.8.12"
+#keepalived_image: "osixia/keepalived:2.0.20"
+#haproxy_stats_port: 9090
 
 # Kubernetes network cni options
 #enable_calico: "no"

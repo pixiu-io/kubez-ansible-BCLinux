@@ -1,10 +1,10 @@
 ---
 project_name: "haproxy"
 
-haproxy_services:
-  haproxy:
-    service_name: haproxy
-    group: haproxy
-  keepalived:
-    service_name: keepalived
-    group: haproxy
+# HA via kubelet static pods (not systemd packages)
+haproxy_image: "haproxy:2.8.12"
+keepalived_image: "osixia/keepalived:2.0.20"
+haproxy_stats_port: 9090
+
+haproxy_manifest_dir: /etc/kubernetes/manifests
+haproxy_kubelet_config_path: /var/lib/kubelet/config.yaml

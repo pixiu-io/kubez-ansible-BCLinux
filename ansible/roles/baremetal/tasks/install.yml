@@ -9,16 +9,7 @@
   when:
     - inventory_hostname in groups['kubernetes']
 
-- name: Install haproxy and keepalived
-  dnf:
-    name:
-      - haproxy
-      - keepalived
-    state: present
-    disable_gpg_check: yes
-  when:
-    - enable_haproxy | bool
-    - inventory_hostname in groups['haproxy']
+# haproxy / keepalived 以 kubelet 静态 Pod 方式运行，不再安装系统包
 
 - name: Install kubernetes packages
   block:

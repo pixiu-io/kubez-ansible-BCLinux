@@ -1,0 +1,14 @@
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: false
+authorization:
+  mode: AlwaysAllow
+cgroupDriver: "{{ haproxy_kubelet_cgroup_driver }}"
+staticPodPath: /etc/kubernetes/manifests
+address: 127.0.0.1
+healthzBindAddress: 127.0.0.1
+failSwapOn: false

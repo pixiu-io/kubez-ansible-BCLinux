@@ -1,12 +1,32 @@
 ---
-- name: Restart keepalived services
-  service:
-    name: keepalived
-    state: restarted
-    enabled: yes
+- name: Restart haproxy static pod
+  shell: |
+    set -e
+    manifest="{{ haproxy_manifest_dir }}/haproxy.yaml"
+    if [ -f "${manifest}" ]; then
+      tmp="$(mktemp)"
+      cp "${manifest}" "${tmp}"
+      rm -f "${manifest}"
+      sleep 3
+      cp "${tmp}" "${manifest}"
+      rm -f "${tmp}"
+    fi
+  args:
+    executable: /bin/bash
+  when: inventory_hostname in groups['haproxy']
 
-- name: Restart haproxy services
-  service:
-    name: haproxy
-    state: restarted
-    enabled: yes
+- name: Restart keepalived static pod
+  shell: |
+    set -e
+    manifest="{{ haproxy_manifest_dir }}/keepalived.yaml"
+    if [ -f "${manifest}" ]; then
+      tmp="$(mktemp)"
+      cp "${manifest}" "${tmp}"
+      rm -f "${manifest}"
+      sleep 3
+      cp "${tmp}" "${manifest}"
+      rm -f "${tmp}"
+    fi
+  args:
+    executable: /bin/bash
+  when: inventory_hostname in groups['haproxy']

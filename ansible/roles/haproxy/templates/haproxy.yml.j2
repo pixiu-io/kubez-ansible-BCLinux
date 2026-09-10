@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: haproxy
+  namespace: kube-system
+  labels:
+    component: haproxy
+    tier: control-plane
+spec:
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  containers:
+    - name: haproxy
+      image: {{ haproxy_image }}
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        httpGet:
+          path: /
+          port: {{ haproxy_stats_port }}
+          host: 127.0.0.1
+        initialDelaySeconds: 15
+        periodSeconds: 10
+      volumeMounts:
+        - name: haproxy-cfg
+          mountPath: /usr/local/etc/haproxy/haproxy.cfg
+          subPath: haproxy.cfg
+          readOnly: true
+  volumes:
+    - name: haproxy-cfg
+      hostPath:
+        path: /etc/haproxy/haproxy.cfg
+        type: File
+  restartPolicy: Always
