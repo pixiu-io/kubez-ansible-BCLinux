@@ -17,13 +17,14 @@ spec:
       securityContext:
         privileged: true
       volumeMounts:
+        # hostPath 直接以完整文件路径挂载（type: File），不能加 subPath：
+        # kubelet 对 subPath 做存在性检查时把 hostPath 当目录拼接，
+        # 报 failed to prepare subPath ... path="/etc/keepalived/keepalived.conf/keepalived.conf"（实测确认）
         - name: keepalived-cfg
           mountPath: /etc/keepalived/keepalived.conf
-          subPath: keepalived.conf
           readOnly: true
         - name: keepalived-check
           mountPath: /etc/keepalived/check_haproxy.sh
-          subPath: check_haproxy.sh
           readOnly: true
   volumes:
     - name: keepalived-cfg

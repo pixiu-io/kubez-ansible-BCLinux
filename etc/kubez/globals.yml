@@ -46,7 +46,7 @@ network_interface: "eth0"
 
 # HA 静态 Pod 镜像（可选，默认见 ansible/group_vars/all.yml）
 #haproxy_image: "haproxy:3.4.4"
-#keepalived_image: "keepalived:2.3.4"
+#keepalived_image: "keepalived:2.3.4-oe2403sp4"
 #haproxy_stats_port: 9090
 
 # Kubernetes network cni options
