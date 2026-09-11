@@ -1,3 +1,7 @@
+# 注意：此处使用单播（unicast）而非默认多播。
+# 原因：OpenStack 等 VM 虚拟化网络的 VRRP 多播（224.0.0.18）常被虚拟交换机过滤，
+# 节点间互相收不到通告，会各自升级 MASTER 导致两节点同时持有 VIP（split-brain，已实测复现）。
+# 单播直接向 peer 列表发送 VRRP 通告，绕过多播限制。
 vrrp_script check_haproxy {
     script "/etc/keepalived/check_haproxy.sh"
     interval 2
@@ -7,11 +11,19 @@ vrrp_script check_haproxy {
 
 vrrp_instance kubernetes_vip_{{ keepalived_virtual_router_id }} {
     state BACKUP
-    nopreempt
     interface {{ api_interface }}
     virtual_router_id {{ keepalived_virtual_router_id }}
-    priority 2
+    # priority 按 haproxy 组内顺序递减（如 3 台 → 100/90/80）：
+    # 明确主备关系，避免等优先级时的选举歧义；不配 nopreempt，
+    # 高优先级节点故障恢复后可收回 VIP（标准做法）
+    priority {{ 100 - groups['haproxy'].index(inventory_hostname) * 10 }}
     advert_int 1
+    unicast_src_ip {{ api_interface_address }}
+    unicast_peer {
+{%- for host in groups['haproxy'] if host != inventory_hostname %}
+        {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}
+{%- endfor %}
+    }
     virtual_ipaddress {
         {{ kube_vip_address }} dev {{ api_interface }}
     }
