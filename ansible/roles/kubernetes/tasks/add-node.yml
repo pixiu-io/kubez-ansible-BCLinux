@@ -68,9 +68,8 @@
 - name: Add kube nodes into kubernetes cluster by runtime
   kube_toolbox:
     module_name: kubeadm
-    module_args: "join {{ kubeconfig.apiserver }}"
+    module_args: "join {{ kubeconfig.apiserver | to_socket(kube_group=item.key) }}"
     module_extra_vars:
-      cri-socket: "{{ socket_result.result.cri_socket }}"
       token: "{{ kubeconfig.token }}"
       discovery-token-ca-cert-hash: "{{ kubeconfig.token_ca_cert_hash }}"
   with_dict: "{{ update_nodes }}"
