@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: haproxy
+  namespace: kube-system
+  labels:
+    component: haproxy
+    tier: control-plane
+  annotations:
+    # /etc/haproxy/haproxy.cfg 的 sha256；配置变化时注解随之变化，kubelet 检测到
+    # pod spec 变化会自动重建静态 Pod（hostPath 文件替换 inode 后仅重启才能读到新内容）
+    haproxy.cfg/checksum: "{{ haproxy_cfg_stat.stat.checksum | default('') }}"
+spec:
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  containers:
+    - name: haproxy
+      image: {{ haproxy_image }}
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        httpGet:
+          path: /
+          port: {{ haproxy_stats_port }}
+          host: 127.0.0.1
+        initialDelaySeconds: 15
+        periodSeconds: 10
+      volumeMounts:
+        - name: haproxy-cfg
+          mountPath: /usr/local/etc/haproxy/haproxy.cfg
+          subPath: haproxy.cfg
+          readOnly: true
+  volumes:
+    - name: haproxy-cfg
+      hostPath:
+        path: /etc/haproxy/haproxy.cfg
+        type: File
+  restartPolicy: Always

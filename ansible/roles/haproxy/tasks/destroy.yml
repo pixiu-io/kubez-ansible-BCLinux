@@ -1,1 +1,19 @@
 ---
+- name: Remove haproxy and keepalived static pod manifests
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ haproxy_manifest_dir }}/haproxy.yaml"
+    - "{{ haproxy_manifest_dir }}/keepalived.yaml"
+  when: inventory_hostname in groups['haproxy']
+
+- name: Remove haproxy and keepalived host configs
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/haproxy/haproxy.cfg
+    - /etc/keepalived/keepalived.conf
+    - /etc/keepalived/check_haproxy.sh
+  when: inventory_hostname in groups['haproxy']

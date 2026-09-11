@@ -5,13 +5,22 @@
   file:
     path: "/etc/{{ item }}"
     state: "directory"
+    mode: "0755"
   become: true
   loop:
     - haproxy
     - keepalived
   when: inventory_hostname in groups['haproxy']
 
-# Allow the haproxy service active without VIP exists.
+- name: Ensuring kubernetes static pod manifests directory exists
+  file:
+    path: "{{ haproxy_manifest_dir }}"
+    state: directory
+    mode: "0755"
+  become: true
+  when: inventory_hostname in groups['haproxy']
+
+# Allow haproxy to bind VIP before it is assigned.
 - name: Setting sysctl values
   become: true
   sysctl: name={{ item.name }} value={{ item.value }} sysctl_set=yes
@@ -24,44 +33,47 @@
   template:
     src: keepalived.conf.j2
     dest: /etc/keepalived/keepalived.conf
+    mode: "0644"
   become: true
   when: inventory_hostname in groups['haproxy']
-  notify:
-    - Restart keepalived services
+
+- name: Copy keepalived health check script
+  template:
+    src: check_haproxy.sh.j2
+    dest: /etc/keepalived/check_haproxy.sh
+    mode: "0755"
+  become: true
+  when: inventory_hostname in groups['haproxy']
 
 - name: Copy haproxy confs
   template:
     src: haproxy.cfg.j2
     dest: /etc/haproxy/haproxy.cfg
+    mode: "0644"
   become: true
   when: inventory_hostname in groups['haproxy']
-  notify:
-    - Restart haproxy services
 
-- name: Check keepalived services
-  service_check:
-    service_name: keepalived
-    service_type: systemd
-  when:
-    - inventory_hostname in groups['haproxy']
-  notify:
-    - Restart keepalived services
+# haproxy.cfg 为 hostPath 挂载，内容变化 kubelet 不感知；将 checksum 注入 manifest 注解，
+# 配置一变 manifest 随之变化，由 kubelet 自行重建静态 Pod 加载新配置。
+- name: Get haproxy config checksum
+  stat:
+    path: /etc/haproxy/haproxy.cfg
+    checksum_algorithm: sha256
+  register: haproxy_cfg_stat
+  when: inventory_hostname in groups['haproxy']
 
-- name: Check haproxy services
-  service_check:
-    service_name: haproxy
-    service_type: systemd
-  when:
-    - inventory_hostname in groups['haproxy']
-  notify:
-    - Restart haproxy services
+- name: Deploy haproxy static pod manifest
+  template:
+    src: haproxy.yml.j2
+    dest: "{{ haproxy_manifest_dir }}/haproxy.yaml"
+    mode: "0600"
+  become: true
+  when: inventory_hostname in groups['haproxy']
 
-# - name: Check haproxy and keepalived services
-#   service_check:
-#     service_name: "{{ item.value.service_name }}"
-#     service_type: systemd
-#   with_dict: "{{ haproxy_services }}"
-#   when:
-#     - inventory_hostname in groups[item.value.group]
-#   notify:
-#     - Restart {{ item.key }} services
+- name: Deploy keepalived static pod manifest
+  template:
+    src: keepalived.yml.j2
+    dest: "{{ haproxy_manifest_dir }}/keepalived.yaml"
+    mode: "0600"
+  become: true
+  when: inventory_hostname in groups['haproxy']

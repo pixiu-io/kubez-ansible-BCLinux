@@ -1,5 +1,5 @@
-vrrp_script check_alive {
-    script "echo info | socat unix-connect:/var/lib/haproxy/stats stdio > /dev/null"
+vrrp_script check_haproxy {
+    script "/etc/keepalived/check_haproxy.sh"
     interval 2
     fall 2
     rise 10
@@ -17,9 +17,10 @@ vrrp_instance kubernetes_vip_{{ keepalived_virtual_router_id }} {
     }
     authentication {
         auth_type PASS
-        auth_pass QsnoVMRe4dmwMVayaOdx5yrD08KUhd5TT2QRRwgh
+        # VRRPv2 auth_pass 上限 8 字符，超长会被 keepalived 截断并告警
+        auth_pass k8sVip68
     }
     track_script {
-        check_alive
+        check_haproxy
     }
 }

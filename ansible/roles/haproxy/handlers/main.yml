@@ -1,12 +1,4 @@
 ---
-- name: Restart keepalived services
-  service:
-    name: keepalived
-    state: restarted
-    enabled: yes
-
-- name: Restart haproxy services
-  service:
-    name: haproxy
-    state: restarted
-    enabled: yes
+# 静态 Pod 生命周期由 kubelet 管理：
+# - manifest 变化（含 haproxy.cfg checksum 注解）时 kubelet 自动重建 Pod，无需 handler
+# - keepalived 配置扩缩 master 时不变，无需处理

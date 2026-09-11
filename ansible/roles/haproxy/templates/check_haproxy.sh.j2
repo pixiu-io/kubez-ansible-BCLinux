@@ -1,0 +1,11 @@
+#!/bin/sh
+# Health-check haproxy stats (hostNetwork). Prefer this over apiserver
+# so the VIP can come up before kubeadm init.
+errorExit() {
+    echo "*** $*" 1>&2
+    exit 1
+}
+
+curl --silent --max-time 2 "http://127.0.0.1:{{ haproxy_stats_port }}/" -o /dev/null \
+  || wget -q -O /dev/null "http://127.0.0.1:{{ haproxy_stats_port }}/" \
+  || errorExit "haproxy stats check failed on 127.0.0.1:{{ haproxy_stats_port }}"
