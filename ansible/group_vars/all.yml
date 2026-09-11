@@ -40,9 +40,9 @@ set_hostname: "yes"
 keepalived_virtual_router_id: "68"
 
 # HA (enable_haproxy) 以 kubelet 静态 Pod 部署 haproxy + keepalived
-# 可按环境改为内网镜像，例如 {{ app_image_repository }}/haproxy:2.8.12
-haproxy_image: "haproxy:2.8.12"
-keepalived_image: "osixia/keepalived:2.0.20"
+# 镜像默认取自自定义镜像仓库 {{ app_image_repository }}，可内网化部署
+haproxy_image: "{{ app_image_repository }}/haproxy:3.4.4"
+keepalived_image: "{{ app_image_repository }}/keepalived:2.3.4"
 haproxy_stats_port: 9090
 
 #####################

@@ -53,6 +53,15 @@
   become: true
   when: inventory_hostname in groups['haproxy']
 
+# haproxy.cfg 为 hostPath 挂载，内容变化 kubelet 不感知；将 checksum 注入 manifest 注解，
+# 配置一变 manifest 随之变化，由 kubelet 自行重建静态 Pod 加载新配置。
+- name: Get haproxy config checksum
+  stat:
+    path: /etc/haproxy/haproxy.cfg
+    checksum_algorithm: sha256
+  register: haproxy_cfg_stat
+  when: inventory_hostname in groups['haproxy']
+
 - name: Deploy haproxy static pod manifest
   template:
     src: haproxy.yml.j2

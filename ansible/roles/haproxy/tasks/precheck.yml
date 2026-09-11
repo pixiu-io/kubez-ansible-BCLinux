@@ -10,6 +10,17 @@
     - kube_vip_port == 6443
     - enable_haproxy | bool
 
+- name: Checking kube_vip_address is configured when haproxy is enabled
+  debug:
+    msg: >-
+      启用 haproxy + keepalived（静态 Pod）时, 必须配置 kube_vip_address（VIP 地址）, 可编辑 /etc/kubez/globals.yml 进行设置
+  failed_when: true
+  connection: local
+  run_once: True
+  when:
+    - enable_haproxy | bool
+    - kube_vip_address | default('') | length == 0
+
 - name: Checking haproxy hosts are kubernetes nodes (static pods need kubelet)
   debug:
     msg: >-

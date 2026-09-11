@@ -13,11 +13,12 @@ spec:
     - name: keepalived
       image: {{ keepalived_image }}
       imagePullPolicy: IfNotPresent
+      command: ["keepalived", "-n", "-l", "-f", "/etc/keepalived/keepalived.conf"]
       securityContext:
         privileged: true
       volumeMounts:
         - name: keepalived-cfg
-          mountPath: /container/service/keepalived/assets/keepalived.conf
+          mountPath: /etc/keepalived/keepalived.conf
           subPath: keepalived.conf
           readOnly: true
         - name: keepalived-check

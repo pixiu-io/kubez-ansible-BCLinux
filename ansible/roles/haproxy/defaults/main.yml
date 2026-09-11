@@ -2,8 +2,8 @@
 project_name: "haproxy"
 
 # HA via kubelet static pods (not systemd packages)
-haproxy_image: "haproxy:2.8.12"
-keepalived_image: "osixia/keepalived:2.0.20"
+haproxy_image: "haproxy:3.4.4"
+keepalived_image: "keepalived:2.3.4"
 haproxy_stats_port: 9090
 
 haproxy_manifest_dir: /etc/kubernetes/manifests

@@ -45,8 +45,8 @@ network_interface: "eth0"
 #kube_vip_port: 6443
 
 # HA 静态 Pod 镜像（可选，默认见 ansible/group_vars/all.yml）
-#haproxy_image: "haproxy:2.8.12"
-#keepalived_image: "osixia/keepalived:2.0.20"
+#haproxy_image: "haproxy:3.4.4"
+#keepalived_image: "keepalived:2.3.4"
 #haproxy_stats_port: 9090
 
 # Kubernetes network cni options

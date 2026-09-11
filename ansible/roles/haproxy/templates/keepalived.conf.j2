@@ -17,7 +17,8 @@ vrrp_instance kubernetes_vip_{{ keepalived_virtual_router_id }} {
     }
     authentication {
         auth_type PASS
-        auth_pass QsnoVMRe4dmwMVayaOdx5yrD08KUhd5TT2QRRwgh
+        # VRRPv2 auth_pass 上限 8 字符，超长会被 keepalived 截断并告警
+        auth_pass k8sVip68
     }
     track_script {
         check_haproxy
