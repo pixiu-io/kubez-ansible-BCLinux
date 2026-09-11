@@ -3,7 +3,7 @@ project_name: "haproxy"
 
 # HA via kubelet static pods (not systemd packages)
 haproxy_image: "haproxy:3.4.4"
-keepalived_image: "keepalived:2.3.4"
+keepalived_image: "keepalived:2.3.4-oe2403sp4"
 haproxy_stats_port: 9090
 
 haproxy_manifest_dir: /etc/kubernetes/manifests

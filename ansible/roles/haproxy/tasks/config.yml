@@ -20,6 +20,93 @@
   become: true
   when: inventory_hostname in groups['haproxy']
 
+# ---------------------------------------------------------------------------
+# init 前 kubelet 拉起（时序依赖务必阅读）：
+# kubeadm rpm 自带的 /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf 强制
+#   --config=/var/lib/kubelet/config.yaml
+#   --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf
+# 二者在 kubeadm init 前均不存在，kubelet 会直接退出（实测依次报
+# "failed to load kubelet config file" 与 "unable to load bootstrap kubeconfig"）。
+# 因此这里：
+#   1. 写入最小 KubeletConfiguration（kubeadm init 的 kubelet-start 阶段会整体重写）；
+#   2. 安装临时 drop-in 90-preinit-static.conf 清空 KUBELET_KUBECONFIG_ARGS，
+#      绕过 bootstrap-kubelet.conf/kubelet.conf 缺失；
+#   3. 启动 kubelet，仅用于 serve /etc/kubernetes/manifests 下的 haproxy/keepalived 静态 Pod，
+#      为 kubeadm init 的 controlPlaneEndpoint（VIP）提供后端。
+# 该 drop-in 由 kubernetes role 在 kubeadm init 之前清理
+# （roles/kubernetes/tasks/deploy-master.yml 的 "Remove pre-init kubelet drop-in" 任务）：
+# init/join 的 kubelet-start 阶段会写齐 config/kubelet.conf/bootstrap-kubelet.conf 并重启
+# kubelet，恢复完整参数。若不清理，drop-in 会持续覆盖 KUBELET_KUBECONFIG_ARGS，
+# 导致 init 后 kubelet 无法连 apiserver 注册节点。
+# 注意：临时窗口内 kubelet 以 anonymous + AlwaysAllow 运行（10250 匿名可访问），
+# 仅用于 init 前静态 Pod，init 后由 kubeadm 生成的配置自动关闭。
+# ---------------------------------------------------------------------------
+- name: Check kubelet service state before init
+  command: systemctl is-active kubelet
+  register: preinit_kubelet_state
+  failed_when: false
+  changed_when: false
+  become: true
+  when: inventory_hostname in groups['haproxy']
+
+- name: Generate minimal kubelet config for static pod serving (pre-init)
+  copy:
+    dest: /var/lib/kubelet/config.yaml
+    content: |
+      # 最小 KubeletConfiguration：仅用于 kubeadm init 前 serve
+      # /etc/kubernetes/manifests 下的 haproxy/keepalived 静态 Pod，
+      # kubeadm init/join 的 kubelet-start 阶段会整体重写本文件。
+      # cgroupDriver 固定 systemd：与 docker daemon.json 的
+      # native.cgroupdriver=systemd、containerd 的 SystemdCgroup=true 对齐。
+      # authentication 改为 anonymous + AlwaysAllow：init 前无任何 client
+      # 凭证，默认 webhook 认证会报 "no client provided, cannot use webhook
+      # authentication" 退出（实测确认）。
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      kind: KubeletConfiguration
+      staticPodPath: /etc/kubernetes/manifests
+      cgroupDriver: systemd
+      authentication:
+        anonymous:
+          enabled: true
+        webhook:
+          enabled: false
+      authorization:
+        mode: AlwaysAllow
+    mode: "0600"
+  become: true
+  when:
+    - inventory_hostname in groups['haproxy']
+    - preinit_kubelet_state.stdout | trim != 'active'
+
+- name: Install temporary kubelet drop-in to skip kubeconfig args (pre-init)
+  copy:
+    dest: /etc/systemd/system/kubelet.service.d/90-preinit-static.conf
+    content: |
+      # 临时 drop-in：清空 KUBELET_KUBECONFIG_ARGS，绕过 kubeadm init 前不存在的
+      # bootstrap-kubelet.conf / kubelet.conf（10-kubeadm.conf 强制引用）。
+      # 必须由 kubernetes role 在 kubeadm init 之前删除
+      # （roles/kubernetes/tasks/deploy-master.yml），否则 init 后 kubelet
+      # 拿不到 --kubeconfig，无法注册节点。
+      [Service]
+      Environment="KUBELET_KUBECONFIG_ARGS="
+    mode: "0644"
+  become: true
+  when:
+    - inventory_hostname in groups['haproxy']
+    - preinit_kubelet_state.stdout | trim != 'active'
+
+- name: Start kubelet to serve haproxy/keepalived static pods (pre-init)
+  systemd:
+    name: kubelet
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+  when:
+    - inventory_hostname in groups['haproxy']
+    - preinit_kubelet_state.stdout | trim != 'active'
+
+
 # Allow haproxy to bind VIP before it is assigned.
 - name: Setting sysctl values
   become: true

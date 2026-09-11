@@ -25,9 +25,11 @@ spec:
         initialDelaySeconds: 15
         periodSeconds: 10
       volumeMounts:
+        # hostPath 直接以完整文件路径挂载（type: File），不能加 subPath：
+        # kubelet 对 subPath 做存在性检查时把 hostPath 当目录拼接，
+        # 报 failed to prepare subPath ... path="/etc/haproxy/haproxy.cfg/haproxy.cfg"（实测确认）
         - name: haproxy-cfg
           mountPath: /usr/local/etc/haproxy/haproxy.cfg
-          subPath: haproxy.cfg
           readOnly: true
   volumes:
     - name: haproxy-cfg

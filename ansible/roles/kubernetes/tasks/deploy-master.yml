@@ -56,6 +56,18 @@
   delegate_to: "{{ groups['kube-master'][0] }}"
   run_once: True
 
+# haproxy role 在 init 前用临时 drop-in（90-preinit-static.conf）清空
+# KUBELET_KUBECONFIG_ARGS 拉起 kubelet serve 静态 Pod（见 roles/haproxy/tasks/config.yml 注释）。
+# 必须在 kubeadm init/join 之前清理：init/join 的 kubelet-start 阶段会写齐
+# config/kubelet.conf/bootstrap-kubelet.conf 并以完整参数重启 kubelet；
+# 若 drop-in 残留会持续覆盖 KUBELET_KUBECONFIG_ARGS，导致 kubelet 无法注册节点。
+- name: Remove pre-init kubelet drop-in before kubeadm init/join
+  file:
+    path: /etc/systemd/system/kubelet.service.d/90-preinit-static.conf
+    state: absent
+  become: true
+  when: inventory_hostname in groups['kube-master']
+
 - name: Initialize the first kubernetes master node
   kube_toolbox:
     module_name: kubeadm

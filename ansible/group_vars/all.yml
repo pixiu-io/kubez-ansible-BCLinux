@@ -42,7 +42,7 @@ keepalived_virtual_router_id: "68"
 # HA (enable_haproxy) 以 kubelet 静态 Pod 部署 haproxy + keepalived
 # 镜像默认取自自定义镜像仓库 {{ app_image_repository }}，可内网化部署
 haproxy_image: "{{ app_image_repository }}/haproxy:3.4.4"
-keepalived_image: "{{ app_image_repository }}/keepalived:2.3.4"
+keepalived_image: "{{ app_image_repository }}/keepalived:2.3.4-oe2403sp4"
 haproxy_stats_port: 9090
 
 #####################
