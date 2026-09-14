@@ -124,6 +124,19 @@
     - inventory_hostname in item.value
     - enable_kubernetes_ha | bool
 
+# pre-init 阶段拉起的 kubelet（serve haproxy/keepalived 静态 Pod）占用 10250 端口，
+# kubeadm join preflight 检查 Port-10250 直接失败（实测）。join 的 kubelet-start 阶段
+# 会以完整配置重新拉起 kubelet 并接管静态 Pod，故 join 前先停掉待加入节点的 kubelet；
+# VIP 由已入集群节点的 keepalived 静态 Pod 兜底，无影响
+- name: Stop pre-init kubelet before join (free port 10250)
+  systemd:
+    name: kubelet
+    state: stopped
+  become: true
+  when:
+    - enable_kubernetes_ha | bool
+    - inventory_hostname in (update_nodes.values() | flatten)
+
 # 初始化命令行配置文件
 - name: Prepare kubeconfig for kubernetes cluster
   block:
