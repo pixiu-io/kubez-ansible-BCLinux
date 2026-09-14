@@ -4,8 +4,8 @@
     path: "{{ item }}"
     state: absent
   loop:
-    - "{{ haproxy_manifest_dir }}/haproxy.yaml"
-    - "{{ haproxy_manifest_dir }}/keepalived.yaml"
+    - "{{ haproxy_manifest_dir }}/pixiu-haproxy.yaml"
+    - "{{ haproxy_manifest_dir }}/pixiu-keepalived.yaml"
   when: inventory_hostname in groups['haproxy']
 
 - name: Remove haproxy and keepalived host configs
