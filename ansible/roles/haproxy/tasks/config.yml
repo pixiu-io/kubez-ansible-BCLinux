@@ -78,6 +78,19 @@
     - inventory_hostname in groups['haproxy']
     - preinit_kubelet_state.stdout | trim != 'active'
 
+- name: Ensuring kubelet service drop-in directory exists
+  # /etc/systemd/system/kubelet.service.d 并非 kubelet RPM 自带（RPM 只装
+  # /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf），全新节点在
+  # kubeadm init/join 前不存在，pre-init 写 drop-in 前必须显式创建
+  file:
+    path: /etc/systemd/system/kubelet.service.d
+    state: directory
+    mode: "0755"
+  become: true
+  when:
+    - inventory_hostname in groups['haproxy']
+    - preinit_kubelet_state.stdout | trim != 'active'
+
 - name: Install temporary kubelet drop-in to skip kubeconfig args (pre-init)
   copy:
     dest: /etc/systemd/system/kubelet.service.d/90-preinit-static.conf
